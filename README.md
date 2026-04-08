@@ -401,8 +401,14 @@ Because TCP is stream-oriented, the application must define its own boundaries b
 - The README structure was adapted from our earlier assignment README format and updated to reflect the final UI.
 
 ### **GenAI Usage**
-- ChatGPT was used to help debug threading, socket shutdown handling, offline message delivery, encryption flow, UI-aligned README drafting, and integration refinements.
-- Any generated suggestions were reviewed, tested, and integrated manually by the group.
+- ChatGPT was used for debugging purposes only, when it comes to:
+     - threading,
+     - socket shutdown handling,
+     - offline message delivery,
+- It was also used to create add the encryption layer on top of the already-built client-server interface.
+- It was majorly used in creating the UI for the program, integrating it with the pre-existing backend software (that can fully function as a CLI-based client-server interface), and UI-aligned README drafting.
+- Any generated debugging suggestions were reviewed, tested, and integrated manually by the group.
+- UI-related changes were heavily tested using multiple use cases, to avoid any overlooked issues, or edge cases.
 
 ### **References**
 - Python Software Foundation. *Socket Programming HOWTO*. https://docs.python.org/3/howto/sockets.html
