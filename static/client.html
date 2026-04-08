@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body class="chat-body">
-  <!-- Authentication screen shown before the user enters the chat UI. -->
   <div id="authScreen" class="auth-screen">
     <div class="auth-card">
       <div class="auth-brand">
@@ -49,7 +48,6 @@
     </div>
   </div>
 
-  <!-- Main chat application shown after successful authentication. -->
   <div id="chatScreen" class="chat-app hidden">
     <aside class="sidebar">
       <div class="sidebar-top">
@@ -91,7 +89,6 @@
     </main>
   </div>
 
-  <!-- Modal used to start a chat by typing the exact username. -->
   <div id="newChatModal" class="modal hidden">
     <div class="modal-card">
       <div class="modal-head">
@@ -108,14 +105,6 @@
   </div>
 
 <script>
-// ------------------------------
-// Client page state and helpers
-// ------------------------------
-//
-// The browser does not connect directly to other browser tabs. Instead, it talks to
-// app.py over HTTP. app.py owns the live TCP socket to backend.py and returns JSON
-// snapshots that this page uses to render the UI.
-// UI/session state for this browser tab.
 const state = {
   mode: 'signin',
   sessionId: null,
@@ -129,11 +118,11 @@ const state = {
   sending: false,
   lastSendKey: '',
   lastSendAt: 0,
+  lastRenderedContact: null,
+  lastRenderedMessageCount: 0,
 };
 
-// Small helper so repeated DOM lookups stay readable.
 function $(id){ return document.getElementById(id); }
-// Send one JSON POST request to the Python bridge.
 async function post(url, body={}){
   const res = await fetch(url,{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
   return res.json();
@@ -176,7 +165,6 @@ function findConversation(contact){
   return state.allConversations.find(c => c.contact === contact)
       || state.conversations.find(c => c.contact === contact);
 }
-// Rebuild the left conversation list from the latest server snapshot.
 function renderContacts(){
   const root = $('contactList');
   const query = $('contactSearch').value.trim().toLowerCase();
@@ -215,23 +203,34 @@ function renderContacts(){
     };
   });
 }
-// Render the currently selected conversation in the right message pane.
 function renderConversation(){
   const contact = state.selectedContact;
   if(!contact){
     $('emptyState').classList.remove('hidden');
     $('conversationShell').classList.add('hidden');
+    state.lastRenderedContact = null;
+    state.lastRenderedMessageCount = 0;
     return;
   }
+
   $('emptyState').classList.add('hidden');
   $('conversationShell').classList.remove('hidden');
   $('chatTitle').textContent = contact;
+
   const online = state.knownUsers.find(u=>u.username === contact)?.online;
   $('chatSubtitle').textContent = online ? 'Online' : 'Offline or not connected right now';
 
   const convo = findConversation(contact) || {messages:[]};
   const messages = convo.messages || [];
   const root = $('messageFeed');
+
+  // Remember scroll position before replacing the conversation HTML.
+  const previousScrollTop = root.scrollTop;
+  const previousScrollHeight = root.scrollHeight;
+  const wasNearBottom = (previousScrollHeight - (previousScrollTop + root.clientHeight)) < 80;
+  const contactChanged = state.lastRenderedContact !== contact;
+  const messageCountIncreased = messages.length > state.lastRenderedMessageCount;
+
   if(!messages.length){
     root.innerHTML = '<div class="empty-copy">No messages yet. Send the first encrypted message.</div>';
   } else {
@@ -248,11 +247,22 @@ function renderConversation(){
       `;
     }).join('');
   }
-  root.scrollTop = root.scrollHeight;
 
+  // Auto-scroll only when it is actually helpful:
+  // 1) when opening a different conversation, or
+  // 2) when a new message appears and the user was already near the bottom.
+  if(contactChanged || (messageCountIncreased && wasNearBottom)){
+    root.scrollTop = root.scrollHeight;
+  } else {
+    // Preserve the reader's relative position when refreshState() re-renders the same chat.
+    const heightDelta = root.scrollHeight - previousScrollHeight;
+    root.scrollTop = Math.max(0, previousScrollTop + heightDelta);
+  }
+
+  state.lastRenderedContact = contact;
+  state.lastRenderedMessageCount = messages.length;
 }
 
-// Merge transient status events such as delivery notices or disconnect messages.
 function mergeEvents(events){
   for(const event of events || []){
     if(['delivery','server_ack','offline_notice','status','system'].includes(event.kind)){
@@ -261,7 +271,6 @@ function mergeEvents(events){
     }
   }
 }
-// Poll app.py so the browser chat stays synchronized with the backend.
 async function refreshState(){
   if(!state.sessionId || state.disconnecting) return;
   const res = await fetch('/api/client/state?session_id=' + encodeURIComponent(state.sessionId));
@@ -279,7 +288,6 @@ async function refreshState(){
   renderContacts();
   renderConversation();
 }
-// Submit the sign-in/sign-up form and open the chat UI if it succeeds.
 async function authenticate(){
   const host = $('hostInput').value.trim();
   const port = Number($('portInput').value);
@@ -296,7 +304,6 @@ async function authenticate(){
   showChatUI();
   await refreshState();
 }
-// Send the current message to the selected contact.
 async function sendMessage(){
   const text = $('messageInput').value.trim();
   if(!state.selectedContact || !text || !state.sessionId || state.sending) return;
@@ -327,7 +334,6 @@ async function sendMessage(){
     $('sendBtn').disabled = false;
   }
 }
-// Open a chat from the username typed in the new-chat modal.
 function openChatFromModal(){
   const manual = $('manualRecipientInput').value.trim();
   if(!manual){
@@ -345,7 +351,6 @@ function openChatFromModal(){
   renderContacts();
   renderConversation();
 }
-// Gracefully disconnect the current browser session.
 async function disconnectClient(showMessage=true){
   if(!state.sessionId || state.disconnecting) return;
   state.disconnecting = true;
@@ -369,7 +374,6 @@ async function disconnectClient(showMessage=true){
   showAuthUI();
   if(showMessage) setFeedback('Disconnected.', 'info');
 }
-// Try to notify the backend when the tab is closed or refreshed.
 function disconnectOnUnload(){
   if(!state.sessionId) return;
   const payload = JSON.stringify({session_id: state.sessionId});
@@ -387,7 +391,6 @@ function disconnectOnUnload(){
   }
 }
 
-// Wire up all UI event handlers after the page script loads.
 Array.from(document.querySelectorAll('.tab-btn')).forEach(btn=>{
   btn.onclick = ()=>{ state.mode = btn.dataset.mode; updateModeButtons(); setFeedback(''); };
 });
