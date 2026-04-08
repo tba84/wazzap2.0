@@ -11,7 +11,7 @@
 | Name | Student ID | Email |
 | :---- | :---- | :---- |
 | Taha Ben Romdhane | 301624808 | tba83@sfu.ca |
-| Partner Name | 30XXXXXXX | partner_email@university.edu |
+| Danny Choi | 301557678 | partner_email@university.edu |
 
 ---
 
@@ -230,7 +230,7 @@ Once logged in, the browser client shows a chat layout with:
 
 - a user label in the sidebar
 - a **Search chats** field
-- a conversation list
+- a conversation list with the most recent discussion shown first
 - a **+** button to start a new discussion
 - a message feed for the selected conversation
 - a composer box with a **Send** button
@@ -248,7 +248,8 @@ To begin chatting with another user:
 2. In the modal window, type the **exact username** of the recipient
 3. Click **Open chat**
 
-If the username is valid, the conversation opens in the main panel.
+The chat opens in the main panel immediately.  
+If the username does **not** exist, the send attempt will fail and the UI will show an error when you try to send the first message.
 
 ---
 
@@ -292,6 +293,8 @@ To end the current browser client session:
 1. Click the **Disconnect** button in the sidebar
 
 This returns the user to the authentication screen and disconnects that browser session from the socket backend.
+
+**Note:** Closing or refreshing the browser tab also attempts to disconnect that session cleanly.
 
 ---
 
@@ -405,3 +408,18 @@ Because TCP is stream-oriented, the application must define its own boundaries b
 - Python Software Foundation. *threading — Thread-based parallelism*. https://docs.python.org/3/library/threading.html
 - `cryptography` documentation. *RSA*. https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/
 - GitHub Docs. *Basic writing and formatting syntax*. https://docs.github.com/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax
+
+
+---
+
+## **11. Readability Notes**
+
+This version of the source code includes explanatory comments in the main files so that a
+new reader can follow:
+
+- the role of each Python module
+- how shared state is protected with locks
+- how the socket protocol is structured
+- how RSA public-key encryption is used
+- how the browser pages communicate with `app.py`
+- how the chat and dashboard pages render and refresh their state
