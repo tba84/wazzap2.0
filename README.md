@@ -1,4 +1,4 @@
-# **CMPT 371 A3 Socket Programming `Secure Chat Application`**
+# **CMPT371_A3_Socket Programming `Secure Chat Application`**
 
 **Course:** CMPT 371 - Data Communications & Networking  
 **Instructor:** Mirza Zaeem Baig  
