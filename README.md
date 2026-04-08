@@ -404,7 +404,7 @@ Because TCP is stream-oriented, the application must define its own boundaries b
 - ChatGPT was used for debugging purposes only, when it comes to:
      - threading,
      - socket shutdown handling,
-     - offline message delivery,
+     - offline message delivery.
 - It was also used to create add the encryption layer on top of the already-built client-server interface.
 - It was majorly used in creating the UI for the program, integrating it with the pre-existing backend software (that can fully function as a CLI-based client-server interface), and UI-aligned README drafting.
 - Any generated debugging suggestions were reviewed, tested, and integrated manually by the group.
