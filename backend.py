@@ -1,3 +1,12 @@
+"""Core encrypted socket backend for the Wazzap project.
+
+This module contains the original chat server/client logic used by the course
+project. It manages authentication, online/offline status, mailbox storage,
+delivery acknowledgements, and end-to-end encryption based on per-user RSA keys.
+It can run directly in terminal mode, and it is also imported by app.py so the same
+backend can be controlled from the browser interface.
+"""
+
 import sys
 import socket
 import threading
@@ -12,22 +21,28 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 
 class InputError(Exception):
+    """Raised when the login/signup dialogue cannot continue safely."""
     pass
 
 
+# Queue of encrypted messages waiting to be delivered to receivers who are online.
 outgoing_messages_queue = queue.Queue()
 
+# In-memory mailbox database. Each username maps to a list of message records.
 database = {}
 database_lock = threading.Lock()
 
+# Tracks each account's password, current socket, online status, and public key.
 client_status_table = {}
 client_table_lock = threading.Lock()
 
+# Used to assign a unique id to each stored message.
 msg_id_counter = 0
 msg_counter_lock = threading.Lock()
 
 
 def safe_close(sock):
+    """Close a socket safely without crashing on shutdown/close errors."""
     if sock is None:
         return
     try:
@@ -41,6 +56,7 @@ def safe_close(sock):
 
 
 def safe_send(sock, data):
+    """Send raw bytes and report success/failure instead of raising to callers."""
     if sock is None:
         return False
     try:
@@ -51,10 +67,12 @@ def safe_send(sock, data):
 
 
 def safe_send_text(sock, message):
+    """Send one newline-terminated text protocol message."""
     return safe_send(sock, (message + "\n").encode("utf-8"))
 
 
 def recv_text(sock, shutdown, timeout=1.0):
+    """Receive one text message while still checking for global server shutdown."""
     """Receive one text message while periodically checking shutdown."""
     old_timeout = sock.gettimeout()
     sock.settimeout(timeout)
@@ -73,6 +91,7 @@ def recv_text(sock, shutdown, timeout=1.0):
 
 
 def mark_client_offline(username, sock=None):
+    """Update a user to offline state and optionally close their current socket."""
     with client_table_lock:
         if username in client_status_table:
             current_sock = client_status_table[username].get("socket")
@@ -84,6 +103,7 @@ def mark_client_offline(username, sock=None):
 
 
 def close_all_clients():
+    """Force every tracked client offline during global server shutdown."""
     sockets_to_close = []
     with client_table_lock:
         for _, info in client_status_table.items():
@@ -97,15 +117,18 @@ def close_all_clients():
 
 
 def next_message_id():
+    """Return the next unique message id in a thread-safe way."""
     global msg_id_counter
     with msg_counter_lock:
         msg_id_counter += 1
         return msg_id_counter
 
 
+# Each username gets a persistent RSA keypair stored under client_keys/.
 KEYS_DIR = Path(__file__).resolve().parent / "client_keys"
 KEYS_DIR.mkdir(exist_ok=True)
 
+# Special line prefixes used by the custom application protocol.
 PUBLIC_KEY_REQUEST_PREFIX = "__PUBLIC_KEY__|"
 NO_PUBLIC_KEY_PREFIX = "__NO_PUBLIC_KEY__|"
 ENCRYPTED_MESSAGE_PREFIX = "__ENCRYPTED_MESSAGE__|"
@@ -113,6 +136,7 @@ SEND_PUBLIC_KEY_PROMPT = "__SEND_PUBLIC_KEY__"
 
 
 def key_paths_for_username(username):
+    """Return filesystem paths for one user's private and public key files."""
     safe_username = "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in username)
     return (
         KEYS_DIR / f"{safe_username}_private.pem",
@@ -121,6 +145,7 @@ def key_paths_for_username(username):
 
 
 def load_or_create_user_keys(username):
+    """Load an existing keypair or create a new RSA keypair for a user."""
     private_path, public_path = key_paths_for_username(username)
 
     if private_path.exists() and public_path.exists():
@@ -148,6 +173,7 @@ def load_or_create_user_keys(username):
 
 
 def public_key_to_b64(public_key):
+    """Encode a public key as base64 text for transport inside protocol lines."""
     pem = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
@@ -156,11 +182,13 @@ def public_key_to_b64(public_key):
 
 
 def public_key_from_b64(public_key_b64):
+    """Decode a base64 public-key string back into a key object."""
     pem = base64.b64decode(public_key_b64.encode("utf-8"))
     return serialization.load_pem_public_key(pem)
 
 
 def encrypt_for_recipient(public_key, plaintext):
+    """Encrypt plaintext with the receiver's public key using RSA-OAEP."""
     ciphertext = public_key.encrypt(
         plaintext.encode("utf-8"),
         padding.OAEP(
@@ -173,6 +201,7 @@ def encrypt_for_recipient(public_key, plaintext):
 
 
 def decrypt_for_self(private_key, ciphertext_b64):
+    """Decrypt a received base64 ciphertext using the user's private key."""
     ciphertext = base64.b64decode(ciphertext_b64.encode("utf-8"))
     plaintext = private_key.decrypt(
         ciphertext,
@@ -186,22 +215,33 @@ def decrypt_for_self(private_key, ciphertext_b64):
 
 
 def clear_current_console_line():
+    """Erase the current terminal line before printing asynchronous output."""
     print("\r" + " " * 180, end="", flush=True)
     print("\r", end="", flush=True)
 
 
 def render_client_prompt(current_buffer):
+    """Redraw the terminal client's prompt after background messages arrive."""
     clear_current_console_line()
     print("client >> " + current_buffer, end="", flush=True)
 
 
 
 def new_client(shutdown, client_socket, client_name_string, client_address):
+    """Main per-client server loop after authentication succeeds.
+
+    This function handles protocol commands from one authenticated user:
+    - GETKEY to ask for another user's public key
+    - SEND to forward an encrypted message
+    - close to terminate the session cleanly
+    """
     print(f"new_client started for {client_name_string} from {client_address}")
 
     client_socket.settimeout(1.0)
 
     try:
+        # This instruction line is mainly for the terminal client. The browser bridge
+        # does not display it directly, but it still forms part of the protocol.
         instructions = "Please send messages in this format: receiver_username, text_message"
         if not safe_send_text(client_socket, instructions):
             raise ConnectionError("failed to send instructions")
@@ -222,6 +262,8 @@ def new_client(shutdown, client_socket, client_name_string, client_address):
                     safe_send_text(client_socket, "connection closing")
                     break
 
+                # GETKEY lets the sender fetch the recipient's public key so encryption
+                # can happen on the sender side before the payload reaches the server.
                 if new_message.startswith("GETKEY|"):
                     requested_username = new_message.split("|", 1)[1].strip()
                     with client_table_lock:
@@ -236,6 +278,8 @@ def new_client(shutdown, client_socket, client_name_string, client_address):
                         raise ConnectionError("client disconnected while sending public key response")
                     continue
 
+                # SEND carries an already-encrypted payload. The server stores and
+                # forwards ciphertext only; it never decrypts user messages.
                 if new_message.startswith("SEND|"):
                     parts = new_message.split("|", 2)
                     if len(parts) != 3:
@@ -306,6 +350,7 @@ def new_client(shutdown, client_socket, client_name_string, client_address):
 
 
 def send_outgoing_messages(shutdown):
+    """Background delivery worker for online recipients."""
     print("send_outgoing_messages")
 
     while not shutdown.is_set():
@@ -360,6 +405,7 @@ def send_outgoing_messages(shutdown):
 
 
 def get_undelivered_messages(shutdown, client_online_name, client_online_socket):
+    """Deliver stored mailbox messages when a user signs back in."""
     print(f"get_undelivered_messages for {client_online_name}")
 
     with database_lock:
@@ -401,12 +447,15 @@ def get_undelivered_messages(shutdown, client_online_name, client_online_socket)
 
 
 def handle_new_connection(shutdown, client_socket, client_address, client_threads):
+    """Complete the signup/signin handshake for one newly accepted TCP socket."""
     """Complete signup/signin for one accepted client before returning."""
     client_socket.settimeout(1.0)
 
     try:
         decision = recv_text(client_socket, shutdown)
 
+        # The first line from a new connection decides whether we enter signup or
+        # signin logic. The rest of the dialogue depends on that choice.
         if decision == "signup":
             if not safe_send_text(client_socket, "choose a username:"):
                 raise InputError("client disconnected during signup")
@@ -525,6 +574,7 @@ def handle_new_connection(shutdown, client_socket, client_address, client_thread
         safe_close(client_socket)
 
 def accept_new_clients(shutdown):
+    """Create the listening server socket and accept new TCP clients until shutdown."""
     print("accept_new_clients")
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -567,6 +617,7 @@ def accept_new_clients(shutdown):
 
 
 def terminal_reader(shutdown):
+    """Watch terminal input so the server can be stopped with 'server shutdown'."""
     print("terminal_reader")
 
     while not shutdown.is_set():
@@ -587,12 +638,18 @@ def terminal_reader(shutdown):
 
 
 def client_print_server_message(message, current_buffer):
+    """Print a server message without destroying the current terminal input buffer."""
     clear_current_console_line()
     print("server >> " + message)
     render_client_prompt(current_buffer)
 
 
 def parse_server_line(line, current_buffer, state):
+    """Interpret one complete protocol line received by the terminal client.
+
+    Some lines are plain status messages. Others are protocol control messages that
+    trigger key exchange, public-key caching, or message decryption.
+    """
     if not line:
         return current_buffer
 
@@ -644,6 +701,7 @@ def parse_server_line(line, current_buffer, state):
 
 
 def drain_server_messages(client_socket, recv_buffer, current_buffer, state):
+    """Read as many complete protocol lines as are currently available."""
     while True:
         try:
             server_msg = client_socket.recv(1024)
@@ -671,6 +729,7 @@ def drain_server_messages(client_socket, recv_buffer, current_buffer, state):
 
 
 def request_public_key(client_socket, target_username, recv_buffer, current_buffer, state):
+    """Request and cache another user's public key before sending a message."""
     if target_username in state["public_key_cache"]:
         return state["public_key_cache"][target_username], recv_buffer, current_buffer, True
 
@@ -705,6 +764,11 @@ def request_public_key(client_socket, target_username, recv_buffer, current_buff
 
 
 def run_client_console(client_socket):
+    """Interactive terminal client.
+
+    The terminal user still types normal plaintext, but before a chat message is sent,
+    the client fetches the recipient's public key and encrypts the message locally.
+    """
     current_buffer = ""
     recv_buffer = ""
 
@@ -807,6 +871,7 @@ def run_client_console(client_socket):
                 render_client_prompt(current_buffer)
 
 def main():
+    """Entry point for terminal server mode or terminal client mode."""
     if len(sys.argv) < 2:
         print("must include server/client when running the script")
         return
@@ -852,5 +917,7 @@ def main():
         print("first argument must be either server or client")
 
 
+# backend.py can run directly in terminal mode, but it is also imported by app.py
+# when the browser interface is used.
 if __name__ == "__main__":
     main()
