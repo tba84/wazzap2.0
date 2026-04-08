@@ -108,12 +108,13 @@ Example project layout:
 ├── app.py
 ├── backend.py
 ├── README.md
+├── video_demo.zip
 ├── static/
-│   ├── index.html
-│   ├── client.html
-│   ├── server.html
-│   └── style.css
-└── client_keys/
+   ├── index.html
+   ├── client.html
+   ├── server.html
+   └── style.css
+
 ```
 
 ### **Main files**
