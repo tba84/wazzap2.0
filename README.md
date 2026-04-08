@@ -71,11 +71,11 @@ Our short demonstration video shows the main workflow of the project in the brow
 - opening the local web interface
 - using the **Server Dashboard** to start the socket backend
 - viewing the backend host and port assigned by the server
-- opening client tabs and authenticating users through the browser UI
 - creating/opening a conversation between users
 - sending and receiving encrypted direct messages in real time
 - seeing conversation updates in the chat list
 - observing live backend activity from the server dashboard logs
+- disconnect flow
 - shutting down the backend from the dashboard
 
 The demonstration video can be viewed here:
