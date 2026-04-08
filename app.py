@@ -1,205 +1,749 @@
-:root {
-  --bg: #0b141a;
-  --panel: #111b21;
-  --panel-2: #202c33;
-  --panel-3: #1f2c34;
-  --text: #e9edef;
-  --muted: #8696a0;
-  --accent: #00a884;
-  --accent-dark: #0b6e5b;
-  --bubble-in: #202c33;
-  --bubble-out: #005c4b;
-  --border: rgba(255,255,255,0.08);
-  --shadow: 0 18px 45px rgba(0,0,0,0.24);
-  --white: #fff;
-  --danger: #d84b4b;
-}
-* { box-sizing: border-box; }
-body { margin: 0; font-family: Inter, Arial, sans-serif; color: var(--text); background: #09141a; }
-a { color: inherit; }
-.hidden { display: none !important; }
-.eyebrow { display: inline-block; text-transform: uppercase; letter-spacing: .12em; font-size: 11px; color: #89bdb1; margin-bottom: 12px; }
-.primary-btn, .ghost-btn, .danger-btn, .tab-btn, .circle-btn, .icon-btn { cursor: pointer; border: 0; transition: .18s ease; }
-.primary-btn { background: var(--accent); color: #03241c; padding: 12px 18px; border-radius: 12px; font-weight: 700; }
-.primary-btn:hover { background: #14c8a0; }
-.ghost-btn { background: transparent; color: var(--text); border: 1px solid var(--border); padding: 11px 16px; border-radius: 12px; text-decoration: none; }
-.ghost-btn:hover { background: rgba(255,255,255,0.05); }
-.danger-btn { background: var(--danger); color: var(--white); padding: 12px 18px; border-radius: 12px; font-weight: 700; }
-.circle-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: #03241c; font-size: 28px; line-height: 1; }
-.icon-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); color: var(--white); font-size: 24px; }
-.wide-btn { width: 100%; }
-.field { display: flex; flex-direction: column; gap: 8px; }
-.field span { font-size: 13px; color: var(--muted); }
-.field input, .field select { width: 100%; background: #0f1c23; border: 1px solid var(--border); color: var(--text); padding: 14px 14px; border-radius: 14px; outline: none; }
-.field input:focus, .field select:focus, .composer input:focus, .search-box input:focus { border-color: rgba(0,168,132,.7); }
-.full { grid-column: 1 / -1; }
-.feedback { min-height: 24px; margin-top: 12px; font-size: 14px; color: var(--muted); }
-.feedback.show.error { color: #ff9f9f; }
-.feedback.show.info { color: #8fdacb; }
-.landing-body { min-height: 100vh; background: radial-gradient(circle at top left, #13312b, #09141a 45%); display: grid; place-items: center; padding: 28px; }
-.landing-shell { width: min(1120px, 100%); }
-.hero-card { background: rgba(17,27,33,.88); border: 1px solid var(--border); box-shadow: var(--shadow); border-radius: 30px; padding: 42px; display: grid; grid-template-columns: 1.1fr .9fr; gap: 30px; }
-.hero-card h1 { font-size: clamp(36px, 5vw, 62px); line-height: 1.02; margin: 0 0 16px; }
-.hero-card p { color: #b7c4ca; font-size: 18px; line-height: 1.6; max-width: 680px; }
-.hero-actions { display: flex; gap: 14px; margin-top: 28px; }
-.preview-window { background: #081116; border: 1px solid var(--border); border-radius: 26px; padding: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
-.preview-topbar { display: flex; gap: 8px; margin-bottom: 16px; }
-.preview-topbar span { width: 11px; height: 11px; border-radius: 50%; background: rgba(255,255,255,.2); }
-.preview-body { display: grid; grid-template-columns: 0.8fr 1.2fr; min-height: 320px; border-radius: 18px; overflow: hidden; }
-.preview-sidebar { background: #111b21; padding: 18px; }
-.preview-avatar { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, #00a884, #62d4bb); margin-bottom: 18px; }
-.preview-line { height: 16px; border-radius: 10px; background: rgba(255,255,255,.08); margin-bottom: 12px; }
-.preview-line.wide { width: 88%; }
-.preview-chat { background: #0b141a; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-.preview-bubble { height: 52px; border-radius: 16px; width: 72%; }
-.preview-bubble.incoming { background: #202c33; }
-.preview-bubble.outgoing { background: #005c4b; align-self: end; }
-.preview-bubble.short { width: 48%; }
-.auth-screen, .dashboard-body, .chat-body { min-height: 100vh; }
-.auth-screen { display: grid; place-items: center; padding: 28px; background: radial-gradient(circle at top, #13312b, #09141a 44%); }
-.auth-card { width: min(520px, 100%); background: rgba(17,27,33,.95); border: 1px solid var(--border); border-radius: 28px; padding: 34px; box-shadow: var(--shadow); }
-.auth-card h1 { margin: 0 0 10px; font-size: 40px; }
-.auth-card p { color: #b1c0c7; margin: 0 0 22px; }
-.tab-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0 18px; }
-.tab-btn { background: #0f1c23; color: var(--muted); padding: 13px 18px; border-radius: 14px; font-weight: 700; border: 1px solid transparent; }
-.tab-btn.active { background: rgba(0,168,132,.16); border-color: rgba(0,168,132,.45); color: #dff7f2; }
-.auth-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.auth-submit { width: 100%; margin-top: 18px; padding: 14px; }
-.auth-footer { margin-top: 20px; text-align: center; color: var(--muted); }
-.chat-app { display: grid; grid-template-columns: 390px 1fr; height: 100vh; }
-.sidebar { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-.sidebar-top { padding: 24px 22px 14px; display: flex; justify-content: space-between; align-items: center; }
-.sidebar-top h2 { margin: 0; font-size: 26px; }
-.search-box { padding: 0 18px 14px; }
-.search-box input { width: 100%; background: #202c33; border: 1px solid transparent; color: var(--text); padding: 14px 16px; border-radius: 12px; }
-.contact-list { flex: 1; overflow: auto; }
-.contact-item { width: 100%; background: transparent; border: 0; color: var(--text); display: grid; grid-template-columns: 56px 1fr; gap: 12px; padding: 14px 18px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.04); }
-.contact-item:hover, .contact-item.active { background: rgba(255,255,255,0.04); }
-.contact-avatar { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: linear-gradient(135deg, #164038, #0c6f59); }
-.contact-meta { min-width: 0; }
-.contact-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
-.contact-head span { color: var(--muted); font-size: 12px; }
-.contact-preview { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sidebar-bottom { padding: 16px 18px 20px; border-top: 1px solid var(--border); }
-.chat-main { background: linear-gradient(180deg, #0b141a, #0d171d); display: flex; align-items: stretch; justify-content: center; }
-.empty-state { margin: auto; text-align: center; color: var(--muted); max-width: 440px; padding: 24px; }
-.empty-state h3 { color: var(--text); font-size: 32px; margin-bottom: 12px; }
-.empty-illustration { width: 120px; height: 120px; margin: 0 auto 22px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #1ce7b8, #005c4b 70%); box-shadow: 0 0 0 14px rgba(0,168,132,.08); }
-.conversation-shell { width: 100%; display: grid; grid-template-rows: auto 1fr auto auto; }
-.conversation-header { padding: 20px 24px; border-bottom: 1px solid var(--border); background: rgba(17,27,33,.7); backdrop-filter: blur(5px); }
-.conversation-header h3 { margin: 0 0 6px; font-size: 24px; }
-.subtle-text, .composer-notice, .empty-copy { color: var(--muted); }
-.message-feed { padding: 26px; overflow: auto; display: flex; flex-direction: column; gap: 10px; background-image:
-  linear-gradient(rgba(11,20,26,.88), rgba(11,20,26,.88)),
-  radial-gradient(circle at top left, rgba(255,255,255,.04), transparent 35%);
-}
-.bubble-row { display: flex; }
-.bubble-row.mine { justify-content: flex-end; }
-.bubble { max-width: min(70%, 700px); padding: 12px 14px 10px; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.16); }
-.bubble.incoming { background: var(--bubble-in); border-top-left-radius: 4px; }
-.bubble.outgoing { background: var(--bubble-out); border-top-right-radius: 4px; }
-.bubble-text { line-height: 1.45; white-space: pre-wrap; }
-.bubble-meta { font-size: 12px; color: rgba(233,237,239,.72); margin-top: 6px; text-align: right; }
-.composer-notice { min-height: 22px; padding: 0 24px 10px; font-size: 13px; }
-.composer { padding: 14px 20px 20px; display: grid; grid-template-columns: 1fr auto; gap: 14px; border-top: 1px solid var(--border); background: rgba(17,27,33,.84); }
-.composer input { background: #202c33; border: 1px solid transparent; color: var(--text); padding: 15px 16px; border-radius: 12px; }
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: grid; place-items: center; padding: 24px; }
-.modal-card { width: min(440px, 100%); background: #101b21; border: 1px solid var(--border); border-radius: 22px; padding: 24px; box-shadow: var(--shadow); }
-.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-.modal-head h3 { margin: 0; }
-.dashboard-body { background: #09141a; padding: 24px; }
-.dashboard-shell { max-width: 1280px; margin: 0 auto; }
-.page-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-.page-header.compact { margin-bottom: 20px; }
-.page-header h1 { margin: 0; font-size: 36px; }
-.card { background: rgba(17,27,33,.96); border: 1px solid var(--border); border-radius: 22px; box-shadow: var(--shadow); }
-.toolbar { display: flex; justify-content: space-between; align-items: end; gap: 16px; padding: 20px; margin-bottom: 18px; }
-.small-field { max-width: 220px; }
-.toolbar-actions { display: flex; gap: 12px; }
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 18px; }
-.stat-card { background: rgba(17,27,33,.96); border: 1px solid var(--border); border-radius: 18px; padding: 18px 20px; }
-.stat-label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-.stat-card strong { font-size: 28px; }
-.dashboard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
-.panel { padding: 20px; min-height: 260px; }
-.panel-head { margin-bottom: 12px; }
-.panel-head h2 { margin: 0; font-size: 22px; }
-.full-span { grid-column: 1 / -1; }
-.stack-list { display: flex; flex-direction: column; gap: 12px; }
-.row-item { padding: 14px 16px; border-radius: 14px; background: rgba(255,255,255,.03); display: flex; justify-content: space-between; gap: 16px; align-items: center; }
-.badge { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 12px; background: rgba(255,255,255,.08); color: var(--text); }
-.badge.success { background: rgba(0,168,132,.18); color: #90f0dd; }
-.mini-stats { display: flex; gap: 14px; color: var(--muted); flex-wrap: wrap; }
-.logbox { margin: 0; white-space: pre-wrap; word-break: break-word; max-height: 420px; overflow: auto; color: #d8e2e6; }
-.padded { padding: 16px; }
-@media (max-width: 980px) {
-  .hero-card { grid-template-columns: 1fr; }
-  .chat-app { grid-template-columns: 1fr; }
-  .sidebar { max-height: 46vh; }
-  .stats-grid, .dashboard-grid, .auth-grid { grid-template-columns: 1fr; }
-}
+"""Browser bridge for the Wazzap secure chat application.
+
+This module does not replace the original socket server in backend.py.
+Instead, it wraps that backend with a lightweight HTTP server so the project can
+be used from normal browser pages. It serves the static UI files, starts/stops the
+TCP backend, keeps track of live browser sessions, and maintains a plaintext chat
+history for the web interface while the Python process is running.
+"""
+
+import json
+import queue
+import socket
+import threading
+import time
+import uuid
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import parse_qs, urlparse
+
+import backend
+
+# Paths and constants for the local web interface.
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / 'static'
+HOST = '127.0.0.1'
+WEB_PORT = 8000
 
 
-/* v9: allow dashboard page to scroll normally */
-body.dashboard-body {
-  min-height: 100vh;
-  height: auto;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
+class AppState:
+    """Shared state used by the browser-facing HTTP layer.
 
-body.dashboard-body .dashboard-shell {
-  padding-bottom: 24px;
-}
+    The TCP backend already stores user accounts, sockets, and encrypted mailboxes.
+    This class stores only the extra state needed by the browser UI: server logs,
+    browser sessions, and a plaintext conversation history used to render the chat
+    window in the browser.
+    """
+    def __init__(self):
+        # Locks are needed because the dashboard, browser sessions, and backend wrapper
+        # all run on separate threads.
+        self.log_lock = threading.Lock()
+        self.logs = []
+        self.server_lock = threading.Lock()
+        self.shutdown = None
+        self.server_thread = None
+        self.server_socket = None
+        self.server_host = None
+        self.server_port = None
+        self.client_sessions = {}
+        self.client_sessions_lock = threading.Lock()
+        self.chat_history_lock = threading.Lock()
+        self.chat_history = {}
 
-/* keep chat page fixed-scroll behavior only on chat */
-body.chat-body {
-  height: 100vh;
-  overflow: hidden;
-}
+    def log(self, message):
+        """Add one timestamped line to the dashboard log buffer."""
+        stamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        line = f'[{stamp}] {message}'
+        with self.log_lock:
+            self.logs.append(line)
+            self.logs = self.logs[-400:]
+        print(line)
+
+    def server_running(self):
+        """Return True only when the wrapped TCP backend is alive and not shutting down."""
+        return (
+            self.server_thread is not None
+            and self.server_thread.is_alive()
+            and self.shutdown is not None
+            and not self.shutdown.is_set()
+        )
+
+    def _history_key(self, user_a, user_b):
+        """Normalize a conversation key so (A, B) and (B, A) map to the same chat."""
+        return tuple(sorted((user_a, user_b)))
+
+    def record_plaintext_message(self, sender, recipient, text, delivered=False, time_sent=None):
+        """Store one readable message for the browser chat UI.
+
+        backend.py stores encrypted payloads in memory. The web UI needs readable text,
+        so the browser layer keeps its own plaintext history. This method also prevents
+        duplicate rows and upgrades pending messages to delivered when confirmation
+        arrives later.
+        """
+        if not sender or not recipient:
+            return
+        now_ts = time.time()
+        row = {
+            'sender': sender,
+            'recipient': recipient,
+            'text': text,
+            'time_sent': time_sent or time.strftime('%Y-%m-%d %H:%M:%S'),
+            'delivered': bool(delivered),
+            '_created_ts': now_ts,
+        }
+        key = self._history_key(sender, recipient)
+        with self.chat_history_lock:
+            rows = self.chat_history.setdefault(key, [])
+
+            # If this message is being observed on the receiver side later
+            # (for example after offline delivery on next sign-in), match it to
+            # the sender-side row that was already recorded when it was sent.
+            if delivered:
+                for existing in rows:
+                    if (
+                        existing.get('sender') == sender
+                        and existing.get('recipient') == recipient
+                        and existing.get('text') == text
+                        and not existing.get('delivered')
+                    ):
+                        existing['delivered'] = True
+                        return
+
+            # Also block immediate accidental double-inserts of the exact same message.
+            if rows:
+                last = rows[-1]
+                same_payload = (
+                    last.get('sender') == sender
+                    and last.get('recipient') == recipient
+                    and last.get('text') == text
+                )
+                last_ts = last.get('_created_ts', 0.0)
+                if same_payload and (now_ts - last_ts) < 0.9:
+                    if delivered:
+                        last['delivered'] = True
+                    return
+
+            rows.append(row)
+
+    def mark_latest_outgoing_delivered(self, sender, recipient):
+        """Mark the most recent pending outgoing message as delivered."""
+        if not sender or not recipient:
+            return False
+        key = self._history_key(sender, recipient)
+        with self.chat_history_lock:
+            rows = self.chat_history.get(key, [])
+            for row in reversed(rows):
+                if row['sender'] == sender and row['recipient'] == recipient and not row.get('delivered'):
+                    row['delivered'] = True
+                    return True
+        return False
+
+    def conversation_rows_for(self, username, initiated_only=False):
+        """Build the conversation list and message list expected by client.html."""
+        conversations = []
+        with self.chat_history_lock:
+            items = list(self.chat_history.items())
+
+        for key, rows in items:
+            if username not in key:
+                continue
+            contact = key[0] if key[1] == username else key[1]
+            initiated = any(row['sender'] == username for row in rows)
+            if initiated_only and not initiated:
+                continue
+
+            messages = []
+            for idx, row in enumerate(rows, start=1):
+                mine = row['sender'] == username
+                messages.append({
+                    'contact': contact,
+                    'direction': 'outgoing' if mine else 'incoming',
+                    'text': row['text'],
+                    'message_id': idx,
+                    'delivered': bool(row.get('delivered')) if mine else True,
+                    'time_sent': row.get('time_sent'),
+                    'time_delivered': row.get('time_sent') if row.get('delivered') else None,
+                    'sender': row['sender'],
+                    'recipient': row['recipient'],
+                    '_created_ts': row.get('_created_ts', 0.0),
+                })
+
+            messages.sort(key=lambda item: (item.get('_created_ts', 0.0), item['message_id'] or 0))
+            last = messages[-1] if messages else None
+            conversations.append({
+                'contact': contact,
+                'messages': messages,
+                'last_message': last['text'] if last else '',
+                'last_time': last['time_sent'] if last else None,
+                '_last_created_ts': last.get('_created_ts', 0.0) if last else 0.0,
+                'undelivered_outgoing': sum(1 for item in messages if item['direction'] == 'outgoing' and not item['delivered']),
+                'initiated_by_me': initiated,
+            })
+
+        conversations.sort(key=lambda row: row.get('_last_created_ts', 0.0), reverse=True)
+        return conversations
 
 
-/* v10: only the chat page uses fixed viewport scrolling */
-body.chat-body {
-  height: 100vh;
-  overflow: hidden;
-}
+STATE = AppState()
 
-body.chat-body .chat-app {
-  height: 100vh;
-  overflow: hidden;
-}
 
-body.chat-body .sidebar,
-body.chat-body .chat-main,
-body.chat-body .conversation-shell {
-  min-height: 0;
-}
+def backend_log(*args, **kwargs):
+    """Redirect backend print output into the browser dashboard log."""
+    STATE.log(' '.join(str(a) for a in args))
 
-body.chat-body .contact-list {
-  overflow-y: auto;
-}
 
-body.chat-body .message-feed {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
+# Rebind backend.print so status messages appear in the web dashboard.
+backend.print = backend_log
 
-body.chat-body .composer {
-  flex-shrink: 0;
-}
 
-/* dashboard and other pages scroll normally */
-html, body {
-  min-height: 100%;
-}
+def start_socket_server(host='127.0.0.1', port=0):
+    """Start the TCP socket backend inside a managed thread.
 
-body.dashboard-body,
-body.landing-body,
-body.auth-screen {
-  height: auto;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
+    The browser pages never communicate with one another directly. They always go
+    through this wrapped backend server.
+    """
+    with STATE.server_lock:
+        if STATE.server_running():
+            return False, 'Server is already running.'
+
+        shutdown = threading.Event()
+        STATE.shutdown = shutdown
+
+        # The backend expects a dedicated delivery thread that drains the outgoing
+        # message queue and forwards ciphertext to currently-online users.
+        def send_outgoing_wrapper():
+            STATE.log('send_outgoing_messages thread started')
+            backend.send_outgoing_messages(shutdown)
+            STATE.log('send_outgoing_messages thread stopped')
+
+        def accept_loop():
+            # This loop is the browser-managed version of the backend accept logic. It
+            # starts the listening socket, accepts TCP clients, and hands each one to the
+            # backend authentication/handler flow.
+            client_threads = []
+            send_thread = threading.Thread(target=send_outgoing_wrapper, daemon=True)
+            send_thread.start()
+
+            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server_socket.bind((host, port))
+            server_socket.listen()
+            server_socket.settimeout(1.0)
+
+            bound_host, bound_port = server_socket.getsockname()
+            STATE.server_socket = server_socket
+            STATE.server_host = bound_host
+            STATE.server_port = bound_port
+            STATE.log(f'Socket backend listening on {bound_host}:{bound_port}')
+
+            try:
+                while not shutdown.is_set():
+                    try:
+                        client_socket, client_address = server_socket.accept()
+                        STATE.log(f'Accepted TCP client from {client_address[0]}:{client_address[1]}')
+                        backend.handle_new_connection(shutdown, client_socket, client_address, client_threads)
+                    except socket.timeout:
+                        continue
+                    except OSError as error:
+                        if shutdown.is_set():
+                            break
+                        STATE.log(f'accept error: {error}')
+            finally:
+                shutdown.set()
+                backend.safe_close(server_socket)
+                backend.close_all_clients()
+                for thread in client_threads:
+                    thread.join(timeout=2.0)
+                send_thread.join(timeout=2.0)
+                STATE.log('Socket backend stopped')
+                with STATE.server_lock:
+                    STATE.server_socket = None
+                    STATE.server_host = None
+                    STATE.server_port = None
+
+        thread = threading.Thread(target=accept_loop, daemon=True)
+        STATE.server_thread = thread
+        thread.start()
+        return True, 'Server started.'
+
+
+class BrowserClientSession:
+    """One signed-in browser tab backed by a live TCP socket.
+
+    Each browser tab gets its own BrowserClientSession object. The object performs
+    the socket-level protocol on behalf of the page, including signup/signin,
+    public-key exchange, encryption, background reads, and graceful disconnects.
+    """
+    def __init__(self, host, port):
+        # session.id lets the stateless HTTP API look up the correct live socket.
+        self.id = str(uuid.uuid4())
+        self.host = host
+        self.port = port
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.settimeout(1.0)
+        self.stop_event = threading.Event()
+        self.reader_thread = None
+        self.events = queue.Queue()
+        self.username = None
+        self.mode = None
+        self.recv_buffer = ''
+        self.private_key = None
+        self.public_key = None
+        self.public_key_cache = {}
+        self.pending_key_lock = threading.Lock()
+        self.pending_public_key_requests = {}
+        self.last_sent_recipient = None
+        self.last_send_fingerprint = None
+        self.last_send_at = 0.0
+
+    def connect(self):
+        """Open the TCP connection to the backend server."""
+        self.socket.connect((self.host, self.port))
+
+    def _send_line(self, text):
+        """Send one newline-terminated protocol line to backend.py."""
+        self.socket.sendall((text + '\n').encode('utf-8'))
+
+    def _recv_line(self, timeout=4.0):
+        """Receive one complete protocol line, buffering partial socket data if needed."""
+        end = time.time() + timeout
+        while time.time() < end and not self.stop_event.is_set():
+            if '\n' in self.recv_buffer:
+                line, self.recv_buffer = self.recv_buffer.split('\n', 1)
+                return line.strip()
+            try:
+                data = self.socket.recv(4096)
+                if not data:
+                    raise ConnectionError('connection closed')
+                self.recv_buffer += data.decode('utf-8', errors='replace')
+            except socket.timeout:
+                continue
+        raise TimeoutError('timed out waiting for server response')
+
+    def _handle_control_line(self, line):
+        """Interpret special backend control lines.
+
+        Some lines are not ordinary chat content. They can request a public key,
+        deliver an encrypted payload, or confirm delivery of an earlier message.
+        """
+        if not line:
+            return None
+        if line == backend.SEND_PUBLIC_KEY_PROMPT:
+            if not self.username:
+                raise ConnectionError('username missing before public key exchange')
+            self.private_key, self.public_key = backend.load_or_create_user_keys(self.username)
+            pub_b64 = backend.public_key_to_b64(self.public_key)
+            self._send_line(f'PUBKEY|{pub_b64}')
+            return {'kind': 'system', 'text': 'Encryption keys loaded.'}
+        if line.startswith(backend.PUBLIC_KEY_REQUEST_PREFIX):
+            _, username, public_key_b64 = line.split('|', 2)
+            public_key = backend.public_key_from_b64(public_key_b64)
+            self.public_key_cache[username] = public_key
+            with self.pending_key_lock:
+                box = self.pending_public_key_requests.get(username)
+            if box is not None:
+                box.put(('ok', public_key))
+            return None
+        if line.startswith(backend.NO_PUBLIC_KEY_PREFIX):
+            username = line.split('|', 1)[1]
+            with self.pending_key_lock:
+                box = self.pending_public_key_requests.get(username)
+            if box is not None:
+                box.put(('missing', None))
+            return None
+        if line.startswith(backend.ENCRYPTED_MESSAGE_PREFIX):
+            _, sender_username, ciphertext_b64 = line.split('|', 2)
+            if self.private_key is None:
+                return {'kind': 'system', 'text': f'Encrypted message from {sender_username} could not be decrypted.'}
+            try:
+                plaintext = backend.decrypt_for_self(self.private_key, ciphertext_b64)
+            except Exception:
+                plaintext = '[decryption failed]'
+            STATE.record_plaintext_message(sender_username, self.username, plaintext, delivered=True)
+            return {'kind': 'incoming', 'from': sender_username, 'text': plaintext}
+        if line == 'message delivered to receiver':
+            if self.last_sent_recipient:
+                STATE.mark_latest_outgoing_delivered(self.username, self.last_sent_recipient)
+            return {'kind': 'delivery', 'text': line}
+        return classify_server_message(line)
+
+    def authenticate(self, mode, username, password):
+        """Run the backend's signup/signin dialogue for this browser session."""
+        self.mode = mode
+        self.username = username
+        self._send_line(mode)
+
+        if mode == 'signup':
+            prompt = self._recv_line()
+            if 'choose a username' not in prompt.lower():
+                raise ConnectionError(prompt)
+            self._send_line(username)
+            prompt = self._recv_line()
+            if 'username already exists' in prompt.lower():
+                raise ValueError(prompt)
+            if 'choose new password' not in prompt.lower():
+                raise ConnectionError(prompt)
+            self._send_line(password)
+            while True:
+                line = self._recv_line(timeout=5.0)
+                event = self._handle_control_line(line)
+                lowered = line.lower()
+                if 'please send messages in this format' in lowered:
+                    if event:
+                        self.events.put(event)
+                    self.events.put({'kind': 'system', 'text': line})
+                    break
+                if event:
+                    self.events.put(event)
+
+        elif mode == 'signin':
+            prompt = self._recv_line()
+            if 'enter your username' not in prompt.lower():
+                raise ConnectionError(prompt)
+            self._send_line(username)
+            prompt = self._recv_line()
+            if 'password' not in prompt.lower():
+                raise ConnectionError(prompt)
+            self._send_line(password)
+            while True:
+                line = self._recv_line(timeout=5.0)
+                lowered = line.lower()
+                event = self._handle_control_line(line)
+                if 'please send messages in this format' in lowered:
+                    if event:
+                        self.events.put(event)
+                    self.events.put({'kind': 'system', 'text': line})
+                    break
+                if 'this connection will terminate' in lowered:
+                    raise ValueError(line)
+                if event:
+                    self.events.put(event)
+        else:
+            raise ValueError('Mode must be signup or signin.')
+
+        self.reader_thread = threading.Thread(target=self._reader_loop, daemon=True)
+        self.reader_thread.start()
+
+    def _reader_loop(self):
+        """Continuously read backend messages after authentication succeeds."""
+        while not self.stop_event.is_set():
+            try:
+                data = self.socket.recv(4096)
+                if not data:
+                    self.events.put({'kind': 'status', 'text': 'Connection closed by server.'})
+                    self.stop_event.set()
+                    break
+                self.recv_buffer += data.decode('utf-8', errors='replace')
+                while '\n' in self.recv_buffer:
+                    line, self.recv_buffer = self.recv_buffer.split('\n', 1)
+                    event = self._handle_control_line(line.strip())
+                    if event is not None:
+                        self.events.put(event)
+            except socket.timeout:
+                continue
+            except (ConnectionResetError, OSError):
+                self.events.put({'kind': 'status', 'text': 'Connection lost.'})
+                self.stop_event.set()
+                break
+
+    def _request_public_key(self, username, timeout=4.0):
+        """Request and cache another user's public key before sending a message."""
+        if username in self.public_key_cache:
+            return self.public_key_cache[username]
+        box = queue.Queue()
+        with self.pending_key_lock:
+            self.pending_public_key_requests[username] = box
+        try:
+            self._send_line(f'GETKEY|{username}')
+            status, key = box.get(timeout=timeout)
+            if status == 'ok':
+                return key
+            return None
+        finally:
+            with self.pending_key_lock:
+                self.pending_public_key_requests.pop(username, None)
+
+    def send_chat(self, recipient, text):
+        """Encrypt one plaintext message and send it through the socket backend."""
+        recipient_key = self._request_public_key(recipient)
+        if recipient_key is None:
+            raise ValueError(f'User "{recipient}" does not exist.')
+        ciphertext_b64 = backend.encrypt_for_recipient(recipient_key, text)
+        self.last_sent_recipient = recipient
+        self._send_line(f'SEND|{recipient}|{ciphertext_b64}')
+        STATE.record_plaintext_message(self.username, recipient, text, delivered=False)
+
+    def poll_events(self):
+        """Return all queued browser events without blocking."""
+        out = []
+        while True:
+            try:
+                out.append(self.events.get_nowait())
+            except queue.Empty:
+                break
+        return out
+
+    def close(self):
+        """Close the session socket and stop the background reader thread."""
+        self.stop_event.set()
+        try:
+            self._send_line('close')
+        except Exception:
+            pass
+        backend.safe_close(self.socket)
+
+
+def classify_server_message(text):
+    """Convert backend acknowledgements into small event objects for the UI."""
+    if text == 'message delivered to receiver':
+        return {'kind': 'delivery', 'text': text}
+    if text == 'message received in server. receiver exists':
+        return {'kind': 'server_ack', 'text': text}
+    if text == 'receiver offline. not delivered.':
+        return {'kind': 'offline_notice', 'text': text}
+    return {'kind': 'system', 'text': text}
+
+
+def known_users(current_username=None):
+    """Return a simple list of known users and online status for the browser UI."""
+    with backend.client_table_lock:
+        users = []
+        for username, info in backend.client_status_table.items():
+            if username == current_username:
+                continue
+            users.append({
+                'username': username,
+                'online': bool(info.get('online')),
+            })
+    users.sort(key=lambda item: (not item['online'], item['username'].lower()))
+    return users
+
+
+class Handler(BaseHTTPRequestHandler):
+    """Small HTTP router used by the local browser interface."""
+    def do_GET(self):
+        """Serve static HTML/CSS files and read-only JSON state endpoints."""
+        parsed = urlparse(self.path)
+        if parsed.path == '/':
+            return self._serve_file('index.html')
+        if parsed.path == '/server':
+            return self._serve_file('server.html')
+        if parsed.path == '/client':
+            return self._serve_file('client.html')
+        if parsed.path.startswith('/static/'):
+            rel = parsed.path[len('/static/'):]
+            return self._serve_file(rel)
+        if parsed.path == '/api/server/state':
+            return self._send_json(self._server_state())
+        if parsed.path == '/api/client/state':
+            qs = parse_qs(parsed.query)
+            session_id = qs.get('session_id', [''])[0]
+            return self._send_json(self._client_state(session_id))
+        self.send_error(404, 'Not Found')
+
+    def do_POST(self):
+        """Handle state-changing operations such as start, shutdown, login, and send."""
+        parsed = urlparse(self.path)
+        data = self._read_json()
+        if parsed.path == '/api/server/start':
+            ok, message = start_socket_server(host='127.0.0.1', port=int(data.get('port', 0) or 0))
+            return self._send_json({'ok': ok, 'message': message, 'state': self._server_state()})
+        if parsed.path == '/api/server/shutdown':
+            with STATE.server_lock:
+                if STATE.shutdown is not None:
+                    STATE.shutdown.set()
+                    if STATE.server_socket is not None:
+                        backend.safe_close(STATE.server_socket)
+            return self._send_json({'ok': True, 'message': 'Shutdown signal sent.', 'state': self._server_state()})
+        if parsed.path == '/api/client/auth':
+            return self._send_json(self._client_auth(data))
+        if parsed.path == '/api/client/send_chat':
+            return self._send_json(self._client_send_chat(data))
+        if parsed.path == '/api/client/disconnect':
+            return self._send_json(self._client_disconnect(data))
+        self.send_error(404, 'Not Found')
+
+    def _server_state(self):
+        """Collect one complete dashboard snapshot."""
+        with backend.client_table_lock:
+            users = {
+                username: {
+                    'online': info.get('online', False),
+                    'has_socket': info.get('socket') is not None,
+                    'has_public_key': bool(info.get('public_key')),
+                }
+                for username, info in backend.client_status_table.items()
+            }
+        with backend.database_lock:
+            mailboxes = {
+                username: {
+                    'total': len(msgs),
+                    'undelivered': sum(1 for m in msgs if not m['delivered']),
+                    'delivered': sum(1 for m in msgs if m['delivered']),
+                }
+                for username, msgs in backend.database.items()
+            }
+        with STATE.log_lock:
+            logs = list(STATE.logs)
+        return {
+            'running': STATE.server_running(),
+            'host': STATE.server_host,
+            'port': STATE.server_port,
+            'users': users,
+            'mailboxes': mailboxes,
+            'queued_messages': backend.outgoing_messages_queue.qsize(),
+            'logs': logs,
+        }
+
+    def _client_auth(self, data):
+        """Create a BrowserClientSession and authenticate it."""
+        host = data.get('host', '127.0.0.1')
+        port = int(data.get('port'))
+        mode = data.get('mode', '').strip().lower()
+        username = data.get('username', '').strip()
+        password = data.get('password', '')
+
+        if mode not in {'signup', 'signin'}:
+            return {'ok': False, 'message': 'Choose signup or signin.'}
+        if not username or not password:
+            return {'ok': False, 'message': 'Username and password are required.'}
+
+        session = BrowserClientSession(host, port)
+        try:
+            session.connect()
+            session.authenticate(mode, username, password)
+        except Exception as error:
+            session.close()
+            return {'ok': False, 'message': str(error)}
+
+        with STATE.client_sessions_lock:
+            STATE.client_sessions[session.id] = session
+        STATE.log(f'Browser user {username} authenticated by {mode} at {host}:{port}')
+        return {
+            'ok': True,
+            'session_id': session.id,
+            'username': username,
+            'mode': mode,
+        }
+
+    def _client_send_chat(self, data):
+        """Validate and forward one browser send request."""
+        session_id = data.get('session_id', '')
+        recipient = data.get('recipient', '').strip()
+        text = data.get('text', '').strip()
+        with STATE.client_sessions_lock:
+            session = STATE.client_sessions.get(session_id)
+        if session is None:
+            return {'ok': False, 'message': 'Invalid session.'}
+        if not recipient or not text:
+            return {'ok': False, 'message': 'Pick a recipient and type a message.'}
+        fingerprint = (recipient, text)
+        now_ts = time.time()
+        if session.last_send_fingerprint == fingerprint and (now_ts - session.last_send_at) < 0.9:
+            return {'ok': True, 'message': 'Skipped duplicate.'}
+        session.last_send_fingerprint = fingerprint
+        session.last_send_at = now_ts
+        try:
+            session.send_chat(recipient, text)
+            return {'ok': True, 'message': 'Sent.'}
+        except Exception as error:
+            return {'ok': False, 'message': str(error)}
+
+    def _client_state(self, session_id):
+        """Return the latest per-client state used by the chat page."""
+        with STATE.client_sessions_lock:
+            session = STATE.client_sessions.get(session_id)
+        if session is None:
+            return {'ok': False, 'closed': True}
+
+        events = session.poll_events()
+        return {
+            'ok': True,
+            'closed': session.stop_event.is_set(),
+            'username': session.username,
+            'events': events,
+            'conversations': STATE.conversation_rows_for(session.username, initiated_only=False),
+            'all_conversations': STATE.conversation_rows_for(session.username, initiated_only=False),
+            'known_users': known_users(session.username),
+        }
+
+    def _client_disconnect(self, data):
+        """Disconnect a browser client and remove its live session object."""
+        session_id = data.get('session_id', '')
+        with STATE.client_sessions_lock:
+            session = STATE.client_sessions.pop(session_id, None)
+        if session is None:
+            return {'ok': True, 'message': 'Already disconnected.'}
+        username = session.username
+        session.close()
+        STATE.log(f'Browser user {username} disconnected')
+        return {'ok': True, 'message': 'Disconnected.'}
+
+    def _read_json(self):
+        """Read and decode a JSON request body, falling back to {} on bad input."""
+        length = int(self.headers.get('Content-Length', '0'))
+        raw = self.rfile.read(length) if length else b'{}'
+        if not raw:
+            return {}
+        text = raw.decode('utf-8', errors='replace').strip()
+        if not text:
+            return {}
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return {}
+
+    def _serve_file(self, relative_path):
+        """Serve one file from the static/ directory."""
+        path = STATIC_DIR / relative_path
+        if not path.exists() or not path.is_file():
+            self.send_error(404, 'Not Found')
+            return
+        content = path.read_bytes()
+        suffix = path.suffix.lower()
+        content_type = {
+            '.html': 'text/html; charset=utf-8',
+            '.css': 'text/css; charset=utf-8',
+            '.js': 'application/javascript; charset=utf-8',
+            '.json': 'application/json; charset=utf-8',
+        }.get(suffix, 'application/octet-stream')
+        self.send_response(200)
+        self.send_header('Content-Type', content_type)
+        self.send_header('Content-Length', str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def _send_json(self, payload, status=200):
+        """Serialize a Python object as JSON and send it as an HTTP response."""
+        raw = json.dumps(payload).encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(raw)))
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def log_message(self, format, *args):
+        """Silence the default BaseHTTPRequestHandler console logging."""
+        return
+
+
+# Start the local web interface. The browser pages then control the socket backend
+# through the JSON endpoints defined above.
+if __name__ == '__main__':
+    STATE.log(f'Web UI available at http://{HOST}:{WEB_PORT}/')
+    httpd = ThreadingHTTPServer((HOST, WEB_PORT), Handler)
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        if STATE.shutdown is not None:
+            STATE.shutdown.set()
+            if STATE.server_socket is not None:
+                backend.safe_close(STATE.server_socket)
+        with STATE.client_sessions_lock:
+            sessions = list(STATE.client_sessions.values())
+            STATE.client_sessions.clear()
+        for session in sessions:
+            session.close()
+        httpd.server_close()
