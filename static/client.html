@@ -1,0 +1,419 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Client Chat</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="chat-body">
+  <!-- Authentication screen shown before the user enters the chat UI. -->
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <span class="eyebrow">Local browser client</span>
+        <h1>Welcome back</h1>
+        <p>Sign in or create an account for your socket chat server.</p>
+      </div>
+
+      <div class="tab-row">
+        <button class="tab-btn active" data-mode="signin">Sign in</button>
+        <button class="tab-btn" data-mode="signup">Sign up</button>
+      </div>
+
+      <div class="auth-grid">
+        <label class="field">
+          <span>Server host</span>
+          <input id="hostInput" value="127.0.0.1">
+        </label>
+        <label class="field">
+          <span>Server port</span>
+          <input id="portInput" type="number" placeholder="Start the backend first">
+        </label>
+        <label class="field full">
+          <span>Username</span>
+          <input id="usernameInput" autocomplete="username">
+        </label>
+        <label class="field full">
+          <span>Password</span>
+          <input id="passwordInput" type="password" autocomplete="current-password">
+        </label>
+      </div>
+
+      <button id="authSubmit" class="primary-btn auth-submit">Sign in</button>
+      <div id="authFeedback" class="feedback"></div>
+
+      <div class="auth-footer">
+        <a href="/server">Open server dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main chat application shown after successful authentication. -->
+  <div id="chatScreen" class="chat-app hidden">
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div>
+          <span class="eyebrow">Chats</span>
+          <h2 id="sidebarUser">User</h2>
+        </div>
+        <button id="newChatBtn" class="circle-btn" title="New chat">+</button>
+      </div>
+      <div class="search-box">
+        <input id="contactSearch" placeholder="Search chats">
+      </div>
+      <div id="contactList" class="contact-list"></div>
+      <div class="sidebar-bottom">
+        <button id="disconnectBtn" class="ghost-btn wide-btn">Disconnect</button>
+      </div>
+    </aside>
+
+    <main class="chat-main">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-illustration"></div>
+        <h3>Select a chat</h3>
+        <p>Choose a previous conversation or start a new one with the + button.</p>
+      </div>
+
+      <div id="conversationShell" class="conversation-shell hidden">
+        <header class="conversation-header">
+          <div>
+            <h3 id="chatTitle">Conversation</h3>
+            <div id="chatSubtitle" class="subtle-text"></div>
+          </div>
+        </header>
+        <div id="messageFeed" class="message-feed"></div>
+        <div class="composer">
+          <input id="messageInput" placeholder="Type a message">
+          <button id="sendBtn" class="primary-btn">Send</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal used to start a chat by typing the exact username. -->
+  <div id="newChatModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Start a new discussion</h3>
+        <button id="closeModalBtn" class="icon-btn">×</button>
+      </div>
+      <label class="field full">
+        <span>Username</span>
+        <input id="manualRecipientInput" placeholder="Type the exact username">
+      </label>
+      <div id="newChatFeedback" class="feedback"></div>
+      <button id="openChatBtn" class="primary-btn wide-btn">Open chat</button>
+    </div>
+  </div>
+
+<script>
+// ------------------------------
+// Client page state and helpers
+// ------------------------------
+//
+// The browser does not connect directly to other browser tabs. Instead, it talks to
+// app.py over HTTP. app.py owns the live TCP socket to backend.py and returns JSON
+// snapshots that this page uses to render the UI.
+// UI/session state for this browser tab.
+const state = {
+  mode: 'signin',
+  sessionId: null,
+  username: null,
+  selectedContact: null,
+  conversations: [],
+  allConversations: [],
+  knownUsers: [],
+  pendingStatus: [],
+  disconnecting: false,
+  sending: false,
+  lastSendKey: '',
+  lastSendAt: 0,
+};
+
+// Small helper so repeated DOM lookups stay readable.
+function $(id){ return document.getElementById(id); }
+// Send one JSON POST request to the Python bridge.
+async function post(url, body={}){
+  const res = await fetch(url,{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  return res.json();
+}
+function escapeHtml(text=''){
+  return text.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function formatTime(text){
+  if(!text) return '';
+  const d = new Date(text.replace(' ', 'T'));
+  if(Number.isNaN(d.getTime())) return text;
+  return d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+}
+function setFeedback(text, type='info'){
+  const node = $('authFeedback');
+  node.textContent = text || '';
+  node.className = 'feedback ' + (text ? ('show ' + type) : '');
+}
+function setNewChatFeedback(text, type='error'){
+  const node = $('newChatFeedback');
+  node.textContent = text || '';
+  node.className = 'feedback ' + (text ? ('show ' + type) : '');
+}
+function updateModeButtons(){
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.mode === state.mode);
+  });
+  $('authSubmit').textContent = state.mode === 'signin' ? 'Sign in' : 'Create account';
+}
+function showChatUI(){
+  $('authScreen').classList.add('hidden');
+  $('chatScreen').classList.remove('hidden');
+  $('sidebarUser').textContent = state.username || 'User';
+}
+function showAuthUI(){
+  $('chatScreen').classList.add('hidden');
+  $('authScreen').classList.remove('hidden');
+}
+function findConversation(contact){
+  return state.allConversations.find(c => c.contact === contact)
+      || state.conversations.find(c => c.contact === contact);
+}
+// Rebuild the left conversation list from the latest server snapshot.
+function renderContacts(){
+  const root = $('contactList');
+  const query = $('contactSearch').value.trim().toLowerCase();
+  let rows = state.conversations.slice();
+
+  if(query){
+    rows = rows.filter(row => row.contact.toLowerCase().includes(query) || (row.last_message || '').toLowerCase().includes(query));
+  }
+
+  if(!rows.length){
+    root.innerHTML = '<div class="empty-copy padded">No chats yet.</div>';
+    return;
+  }
+
+  root.innerHTML = rows.map(row=>{
+    const online = state.knownUsers.find(u=>u.username === row.contact)?.online || false;
+    return `
+      <button class="contact-item ${state.selectedContact === row.contact ? 'active' : ''}" data-contact="${escapeHtml(row.contact)}">
+        <div class="contact-avatar">${escapeHtml(row.contact.slice(0,1).toUpperCase())}</div>
+        <div class="contact-meta">
+          <div class="contact-head">
+            <strong>${escapeHtml(row.contact)}</strong>
+            <span>${online ? 'online' : ''}</span>
+          </div>
+          <div class="contact-preview">${escapeHtml(row.last_message || 'Conversation started')}</div>
+        </div>
+      </button>
+    `;
+  }).join('');
+
+  root.querySelectorAll('.contact-item').forEach(btn=>{
+    btn.onclick = ()=>{
+      state.selectedContact = btn.dataset.contact;
+      renderContacts();
+      renderConversation();
+    };
+  });
+}
+// Render the currently selected conversation in the right message pane.
+function renderConversation(){
+  const contact = state.selectedContact;
+  if(!contact){
+    $('emptyState').classList.remove('hidden');
+    $('conversationShell').classList.add('hidden');
+    return;
+  }
+  $('emptyState').classList.add('hidden');
+  $('conversationShell').classList.remove('hidden');
+  $('chatTitle').textContent = contact;
+  const online = state.knownUsers.find(u=>u.username === contact)?.online;
+  $('chatSubtitle').textContent = online ? 'Online' : 'Offline or not connected right now';
+
+  const convo = findConversation(contact) || {messages:[]};
+  const messages = convo.messages || [];
+  const root = $('messageFeed');
+  if(!messages.length){
+    root.innerHTML = '<div class="empty-copy">No messages yet. Send the first encrypted message.</div>';
+  } else {
+    root.innerHTML = messages.map(msg=>{
+      const mine = msg.direction === 'outgoing';
+      const status = mine ? (msg.delivered ? 'Delivered' : 'Pending') : '';
+      return `
+        <div class="bubble-row ${mine ? 'mine' : 'theirs'}">
+          <div class="bubble ${mine ? 'outgoing' : 'incoming'}">
+            <div class="bubble-text">${escapeHtml(msg.text)}</div>
+            <div class="bubble-meta">${formatTime(msg.time_sent)} ${status ? '· ' + status : ''}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  root.scrollTop = root.scrollHeight;
+
+}
+
+// Merge transient status events such as delivery notices or disconnect messages.
+function mergeEvents(events){
+  for(const event of events || []){
+    if(['delivery','server_ack','offline_notice','status','system'].includes(event.kind)){
+      state.pendingStatus.push(event.text || '');
+      state.pendingStatus = state.pendingStatus.slice(-8);
+    }
+  }
+}
+// Poll app.py so the browser chat stays synchronized with the backend.
+async function refreshState(){
+  if(!state.sessionId || state.disconnecting) return;
+  const res = await fetch('/api/client/state?session_id=' + encodeURIComponent(state.sessionId));
+  const data = await res.json();
+  if(!data.ok || data.closed){
+    state.sessionId = null;
+    setFeedback('Session closed. Please sign in again.', 'error');
+    showAuthUI();
+    return;
+  }
+  state.conversations = data.conversations || [];
+  state.allConversations = data.all_conversations || [];
+  state.knownUsers = data.known_users || [];
+  mergeEvents(data.events || []);
+  renderContacts();
+  renderConversation();
+}
+// Submit the sign-in/sign-up form and open the chat UI if it succeeds.
+async function authenticate(){
+  const host = $('hostInput').value.trim();
+  const port = Number($('portInput').value);
+  const username = $('usernameInput').value.trim();
+  const password = $('passwordInput').value;
+  const res = await post('/api/client/auth', {host, port, username, password, mode: state.mode});
+  if(!res.ok){ setFeedback(res.message || 'Authentication failed.', 'error'); return; }
+  state.sessionId = res.session_id;
+  state.username = res.username;
+  state.selectedContact = null;
+  state.pendingStatus = [];
+  state.disconnecting = false;
+  setFeedback('');
+  showChatUI();
+  await refreshState();
+}
+// Send the current message to the selected contact.
+async function sendMessage(){
+  const text = $('messageInput').value.trim();
+  if(!state.selectedContact || !text || !state.sessionId || state.sending) return;
+
+  const sendKey = `${state.sessionId}::${state.selectedContact}::${text}`;
+  const now = Date.now();
+  if (state.lastSendKey === sendKey && (now - state.lastSendAt) < 900) {
+    return;
+  }
+
+  state.sending = true;
+  state.lastSendKey = sendKey;
+  state.lastSendAt = now;
+  $('sendBtn').disabled = true;
+
+  try{
+    const res = await post('/api/client/send_chat', {session_id: state.sessionId, recipient: state.selectedContact, text});
+    if(!res.ok){
+      state.pendingStatus.push(res.message || 'Send failed');
+      state.pendingStatus = state.pendingStatus.slice(-8);
+      renderConversation();
+      return;
+    }
+    $('messageInput').value = '';
+    setTimeout(refreshState, 180);
+  } finally {
+    state.sending = false;
+    $('sendBtn').disabled = false;
+  }
+}
+// Open a chat from the username typed in the new-chat modal.
+function openChatFromModal(){
+  const manual = $('manualRecipientInput').value.trim();
+  if(!manual){
+    setNewChatFeedback('Enter a username.', 'error');
+    return;
+  }
+  if(manual === state.username){
+    setNewChatFeedback('Choose another user.', 'error');
+    return;
+  }
+  state.selectedContact = manual;
+  $('newChatModal').classList.add('hidden');
+  $('manualRecipientInput').value = '';
+  setNewChatFeedback('');
+  renderContacts();
+  renderConversation();
+}
+// Gracefully disconnect the current browser session.
+async function disconnectClient(showMessage=true){
+  if(!state.sessionId || state.disconnecting) return;
+  state.disconnecting = true;
+  const sessionId = state.sessionId;
+  try{
+    await fetch('/api/client/disconnect', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({session_id: sessionId}),
+      keepalive: true
+    });
+  }catch(e){}
+  state.sessionId = null;
+  state.username = null;
+  state.selectedContact = null;
+  state.conversations = [];
+  state.allConversations = [];
+  state.knownUsers = [];
+  state.pendingStatus = [];
+  state.disconnecting = false;
+  showAuthUI();
+  if(showMessage) setFeedback('Disconnected.', 'info');
+}
+// Try to notify the backend when the tab is closed or refreshed.
+function disconnectOnUnload(){
+  if(!state.sessionId) return;
+  const payload = JSON.stringify({session_id: state.sessionId});
+  try {
+    navigator.sendBeacon('/api/client/disconnect', new Blob([payload], {type:'application/json'}));
+  } catch (e) {
+    try {
+      fetch('/api/client/disconnect', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: payload,
+        keepalive: true
+      });
+    } catch (err) {}
+  }
+}
+
+// Wire up all UI event handlers after the page script loads.
+Array.from(document.querySelectorAll('.tab-btn')).forEach(btn=>{
+  btn.onclick = ()=>{ state.mode = btn.dataset.mode; updateModeButtons(); setFeedback(''); };
+});
+$('authSubmit').onclick = authenticate;
+$('passwordInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') authenticate(); });
+$('contactSearch').addEventListener('input', renderContacts);
+$('sendBtn').onclick = sendMessage;
+$('messageInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') sendMessage(); });
+$('newChatBtn').onclick = ()=> {
+  $('newChatModal').classList.remove('hidden');
+  $('manualRecipientInput').focus();
+  setNewChatFeedback('');
+};
+$('closeModalBtn').onclick = ()=> {
+  $('newChatModal').classList.add('hidden');
+  setNewChatFeedback('');
+};
+$('openChatBtn').onclick = openChatFromModal;
+$('manualRecipientInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') openChatFromModal(); });
+$('disconnectBtn').onclick = async ()=>{ await disconnectClient(true); };
+
+window.addEventListener('pagehide', disconnectOnUnload);
+window.addEventListener('beforeunload', disconnectOnUnload);
+
+updateModeButtons();
+setInterval(refreshState, 900);
+</script>
+</body>
+</html>
