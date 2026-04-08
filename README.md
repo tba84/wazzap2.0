@@ -11,7 +11,7 @@
 | Name | Student ID | Email |
 | :---- | :---- | :---- |
 | Taha Ben Romdhane | 301624808 | tba83@sfu.ca |
-| Danny Choi | 301557678 | partner_email@university.edu |
+| Danny Choi | 301557678 | jca534@sfu.ca |
 
 ---
 
