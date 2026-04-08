@@ -79,7 +79,7 @@ Our short demonstration video covering:
 
 can be viewed here:
 
-[**▶️ Watch Project Demo**](PASTE_YOUR_VIDEO_LINK_HERE)
+[**▶️ Watch Project Demo**](https://github.com/tba84/wazzap2.0/blob/main/video_demo.zip)
 
 ---
 
