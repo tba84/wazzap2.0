@@ -66,18 +66,19 @@ As required by the project specifications, we identified and handled the followi
 
 <span style="color: purple;">***RUBRIC NOTE: Include a clickable video link here before submission.***</span>
 
-Our short demonstration video covering:
-- launching the local web app
-- starting the socket backend
-- user signup/signin
-- creating chats
-- sending and receiving messages
-- offline delivery
-- disconnect flow
-- server dashboard monitoring
-- graceful server shutdown
+Our short demonstration video shows the main workflow of the project in the browser-based **Wazzap** interface. In the clip, we demonstrate:
 
-can be viewed here:
+- opening the local web interface
+- using the **Server Dashboard** to start the socket backend
+- viewing the backend host and port assigned by the server
+- opening client tabs and authenticating users through the browser UI
+- creating/opening a conversation between users
+- sending and receiving encrypted direct messages in real time
+- seeing conversation updates in the chat list
+- observing live backend activity from the server dashboard logs
+- shutting down the backend from the dashboard
+
+The demonstration video can be viewed here:
 
 [**▶️ Watch Project Demo**](https://github.com/tba84/wazzap2.0/blob/main/video_demo.zip)
 
